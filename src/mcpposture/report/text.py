@@ -80,7 +80,7 @@ def render(report: dict[str, Any]) -> str:
 
     if report["servers"]:
         out.append("")
-        out.append("Servers  (Rule of Two: A untrusted input, B private data, C external actions; ? unclassified)")
+        out.append("Servers  (Rule of Two: A untrusted input, B private data, C external actions; lowercase = heuristic guess, ??? = unclassified)")
         for srv in report["servers"]:
             target = srv["url"] or " ".join([srv["command"] or ""] + srv["args"])
             out.append(

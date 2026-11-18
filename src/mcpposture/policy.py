@@ -291,7 +291,7 @@ def _banned(ident: Identity, entries: Iterable[Entry]) -> Entry | None:
     for e in entries:
         if e.kind != ident.kind:
             continue
-        if e.value == ident.value or (e.kind == "url" and ident.value.startswith(e.value.rstrip("*"))):
+        if e.value == ident.value or (e.kind == "url" and e.value.endswith("*") and ident.value.startswith(e.value[:-1])):
             return e
     return None
 

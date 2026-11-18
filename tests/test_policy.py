@@ -147,6 +147,12 @@ def test_banned_is_critical_even_without_require_approved():
     assert {r for _, r in result.violations} == {"banned"}
 
 
+def test_banned_url_without_wildcard_is_exact():
+    text = "schema_version = 1\n[[banned]]\nurl = 'https://evil.example.com'"
+    result = run(text, {"a": {"type": "http", "url": "https://evil.example.com.other.net/mcp"}, "b": {"type": "http", "url": "https://EVIL.example.com/"}})
+    assert [f.server for f in result.findings] == ["b"]
+
+
 def test_max_severity_turns_findings_into_violations():
     def finding(sev):
         return Finding("MP003", sev, "t", "w", "r", (), (), "cursor", Location(Path("/x")), "", f"fp{sev}")

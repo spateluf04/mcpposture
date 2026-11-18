@@ -6,10 +6,23 @@ build-backend = "setuptools.build_meta"
 name = "mcpposture"
 version = "0.1.0"
 description = "Read-only auditor for AI agent and MCP server configurations on developer machines."
+readme = "README.md"
 requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "Samir Patel" }]
 dependencies = []
+
+keywords = ["mcp", "ai-agents", "security", "endpoint-security", "prompt-injection"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+    "Environment :: Console",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/spateluf04/mcpposture"
+Issues = "https://github.com/spateluf04/mcpposture/issues"
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
