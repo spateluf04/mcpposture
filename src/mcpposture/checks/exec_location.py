@@ -47,7 +47,7 @@ _UNTRUSTED = (
 _DRIVE = re.compile(r"^[a-z]:/")
 
 
-def _executed_paths(launch: Launch) -> list[tuple[str, str]]:
+def executed_paths(launch: Launch) -> list[tuple[str, str]]:
     """(path, pointer) for the program and, for interpreters, the script it runs."""
     found = [(launch.command, "/command" if launch.inline_arg is None and launch.arg_offset == 0 else launch.pointer(-1))]
     program, args = launch.program, launch.args
@@ -91,7 +91,7 @@ def check(ctx: CheckContext) -> Iterator[Finding]:
         launch = unwrap(s)
         if launch is None:
             continue
-        for path, pointer in _executed_paths(launch):
+        for path, pointer in executed_paths(launch):
             kind = location_kind(path)
             if kind == "untrusted":
                 yield server_finding(INFO, ctx, s, pointer, evidence=f"runs {path}", discriminator=path)

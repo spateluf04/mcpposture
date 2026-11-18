@@ -57,7 +57,7 @@ def report(inv, findings=()):
 def test_schema_shape():
     r = report(Inventory(servers=[server()]))
     assert r["schema_version"] == SCHEMA_VERSION
-    assert set(r) == {"schema_version", "tool", "machine", "scan", "summary", "findings", "servers", "contexts", "files", "scan_issues"}
+    assert set(r) == {"schema_version", "tool", "machine", "scan", "summary", "policy", "findings", "servers", "contexts", "files", "scan_issues"}
     assert r["machine"] == {"hostname": "box", "os": "linux", "wsl": True}
     assert r["servers"][0]["source"] == {"path": str(Path("/h/.cursor/mcp.json")), "pointer": "/mcpServers/s", "line": 4}
     json.loads(render(r))

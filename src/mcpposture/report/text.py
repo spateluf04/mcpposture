@@ -44,6 +44,18 @@ def render(report: dict[str, Any]) -> str:
         f"found {s['servers']} servers in {s['contexts']} agent contexts."
     )
 
+    policy = report.get("policy")
+    if policy:
+        if policy["compliant"]:
+            out.append(f"Policy {clean(policy['path'])}: COMPLIANT")
+        else:
+            reasons: dict[str, int] = {}
+            for v in policy["violations"]:
+                reasons[v["reason"]] = reasons.get(v["reason"], 0) + 1
+            detail = ", ".join(f"{n} {r.replace('_', ' ')}" for r, n in sorted(reasons.items()))
+            n = len(policy["violations"])
+            out.append(f"Policy {clean(policy['path'])}: NOT COMPLIANT, {n} violation{'s' if n != 1 else ''} ({detail})")
+
     findings = report["findings"]
     out.append("")
     if not findings:

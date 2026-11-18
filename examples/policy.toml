@@ -1,0 +1,44 @@
+# Example MCPosture policy.
+#
+#   mcpposture policy validate examples/policy.toml
+#   mcpposture enforce --policy examples/policy.toml
+#
+# Servers are matched by what actually runs, never by the name in the config.
+# docs/policy.md describes every field.
+
+schema_version = 1
+
+# Any finding more severe than this is a violation. Omit to ignore check findings.
+max_severity = "medium"
+
+# When true, every configured server must match an [[approved]] entry.
+require_approved = true
+
+[[approved]]
+npm = "@modelcontextprotocol/server-filesystem"
+version = "2025.8.21"
+note = "Allowed with project-scoped paths only; MP005 still applies."
+
+[[approved]]
+pypi = "mcp-server-fetch"
+version = "2025.4.7"
+
+[[approved]]
+url = "https://mcp.context7.com/mcp"
+
+[[approved]]
+oci = "ghcr.io/github/github-mcp-server"
+digest = "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+note = "Placeholder digest: replace with the digest your security team reviewed."
+
+[[approved]]
+command = "/opt/company/bin/internal-mcp"
+sha256 = "0000000000000000000000000000000000000000000000000000000000000000"
+
+[[banned]]
+npm = "@example/known-bad-mcp"
+reason = "Example entry: a package your security team has blocked."
+
+[[banned]]
+url = "https://untrusted.example.com/*"
+reason = "Example entry: every server on this host."

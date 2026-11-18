@@ -79,6 +79,54 @@ def test_bad_arguments_are_exit_2(capsys, argv):
     assert run(capsys, *argv)[0] == cli.EXIT_ERROR
 
 
+EXAMPLE_POLICY = Path(__file__).resolve().parents[1] / "examples" / "policy.toml"
+
+
+def test_enforce_compliant(tmp_path, capsys):
+    pol = tmp_path / "p.toml"
+    pol.write_text("schema_version = 1\nmax_severity = 'critical'\n")
+    code, out, _ = run(capsys, "enforce", "--policy", str(pol), "--path", str(BASIC))
+    assert code == cli.EXIT_OK
+    assert "COMPLIANT" in out
+
+
+def test_enforce_violation(capsys):
+    code, out, _ = run(capsys, "enforce", "--policy", str(EXAMPLE_POLICY), "--path", str(VULNERABLE), "--format", "json")
+    assert code == cli.EXIT_FINDINGS
+    report = json.loads(out)
+    assert report["policy"]["compliant"] is False
+    assert {v["reason"] for v in report["policy"]["violations"]} == {"not_approved", "above_max_severity"}
+    assert any(f["check_id"] == "MP008" for f in report["findings"])
+
+
+def test_enforce_requires_policy(capsys):
+    assert run(capsys, "enforce", "--path", str(BASIC))[0] == cli.EXIT_ERROR
+
+
+def test_enforce_with_invalid_policy_is_exit_2(tmp_path, capsys):
+    pol = tmp_path / "p.toml"
+    pol.write_text("schema_version = 1\n[[approved]]\nnpm = 'x'\n")
+    code, _, err = run(capsys, "enforce", "--policy", str(pol), "--path", str(BASIC))
+    assert code == cli.EXIT_ERROR
+    assert "must pin a version" in err
+
+
+def test_policy_validate(tmp_path, capsys):
+    code, out, _ = run(capsys, "policy", "validate", str(EXAMPLE_POLICY))
+    assert code == cli.EXIT_OK and "valid (0 errors, 0 warnings)" in out
+    bad = tmp_path / "bad.toml"
+    bad.write_text("schema_version = 1\n[[approved]]\nnpm = 'x'\nversion = '^1'\n")
+    code, out, _ = run(capsys, "policy", "validate", str(bad))
+    assert code == cli.EXIT_FINDINGS and "error: approved[0]" in out
+    assert run(capsys, "policy", "validate", str(tmp_path / "missing.toml"))[0] == cli.EXIT_ERROR
+
+
+def test_scan_sarif_format(capsys):
+    code, out, _ = run(capsys, "scan", "--path", str(BASIC), "--format", "sarif")
+    assert code == cli.EXIT_OK
+    assert json.loads(out)["version"] == "2.1.0"
+
+
 def test_help_is_exit_0(capsys):
     assert run(capsys, "--help")[0] == cli.EXIT_OK
 

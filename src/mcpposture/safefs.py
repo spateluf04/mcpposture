@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 import stat
 from pathlib import Path
@@ -98,6 +99,34 @@ def read_config(
 
     if len(data) > max_bytes:
         raise SafeReadError(TOO_LARGE, f"exceeds the {max_bytes}-byte limit")
+    return _decode(data)
+
+
+def sha256_file(path: str | Path, *, max_bytes: int) -> str | None:
+    """SHA-256 of a regular file, or None if it is missing, special, or too large. Never executes it."""
+    try:
+        fd = os.open(path, os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0))
+    except OSError:
+        return None
+    try:
+        st = os.fstat(fd)
+        if not stat.S_ISREG(st.st_mode) or st.st_size > max_bytes:
+            return None
+        h = hashlib.sha256()
+        total = 0
+        while chunk := os.read(fd, 1024 * 1024):
+            total += len(chunk)
+            if total > max_bytes:  # file grew after fstat
+                return None
+            h.update(chunk)
+        return h.hexdigest()
+    except OSError:
+        return None
+    finally:
+        os.close(fd)
+
+
+def _decode(data: bytes) -> str:
     try:
         return data.decode("utf-8-sig")
     except UnicodeDecodeError as e:

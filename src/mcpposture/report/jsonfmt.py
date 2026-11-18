@@ -16,11 +16,29 @@ from typing import Sequence
 from mcpposture import __version__
 from mcpposture.discovery.hostinfo import Host
 from mcpposture.model import AgentContext, Classification, Finding, Inventory, ServerConfig, Severity
+from mcpposture.policy import Evaluation
 from mcpposture.redact import redact, redact_args, redact_url
 
 # Bump the minor version for added fields, the major version for anything
 # removed, renamed, or changed in meaning.
-SCHEMA_VERSION = "1.1"
+SCHEMA_VERSION = "1.2"
+
+
+def _policy(evaluation: Evaluation | None) -> dict[str, object] | None:
+    if evaluation is None:
+        return None
+    p = evaluation.policy
+    return {
+        "path": p.path,
+        "sha256": p.sha256,
+        "max_severity": p.max_severity.label if p.max_severity is not None else None,
+        "require_approved": p.require_approved,
+        "compliant": evaluation.compliant,
+        "violations": [
+            {"fingerprint": f.fingerprint, "check_id": f.check_id, "severity": f.severity.label, "server": f.server, "reason": reason}
+            for f, reason in evaluation.violations
+        ],
+    }
 
 
 def _capabilities(c: Classification | None) -> dict[str, object]:
@@ -93,6 +111,7 @@ def build_report(
     target: Path | None,
     started_at: datetime,
     fail_on: Severity,
+    evaluation: Evaluation | None = None,
 ) -> dict[str, object]:
     ordered = sorted(findings, key=lambda f: (-f.severity, f.check_id, str(f.location.path), f.location.pointer))
     by_sev = Counter(f.severity.label for f in ordered)
@@ -115,6 +134,7 @@ def build_report(
             "findings": {sev.label: by_sev.get(sev.label, 0) for sev in sorted(Severity, reverse=True)},
             "highest_severity": ordered[0].severity.label if ordered else None,
         },
+        "policy": _policy(evaluation),
         "findings": [_finding(f) for f in ordered],
         "servers": [_server(s, inv) for s in inv.servers],
         "contexts": [_context(c, inv) for c in inv.contexts],
