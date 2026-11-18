@@ -1,0 +1,13 @@
+{
+  "inputs": [
+    { "type": "promptString", "id": "api-key", "description": "API key", "password": true }
+  ],
+  "servers": {
+    "search": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": ["example-search-mcp==0.3.1"],
+      "env": { "SEARCH_API_KEY": "${input:api-key}" }
+    }
+  }
+}

@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcpposture"
+version = "0.1.0"
+description = "Read-only auditor for AI agent and MCP server configurations on developer machines."
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Samir Patel" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[project.scripts]
+mcpposture = "mcpposture.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+mcpposture = ["data/*.toml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]
+addopts = "--import-mode=importlib"

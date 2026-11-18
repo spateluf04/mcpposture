@@ -1,0 +1,9 @@
+{
+  // Cursor accepts JSON with comments.
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${workspaceFolder}"],
+    },
+  },
+}
