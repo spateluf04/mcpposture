@@ -19,6 +19,10 @@
     },
     "downloaded-tool": {
       "command": "/tmp/mcp-server"
+    },
+    "web": {
+      "command": "uvx",
+      "args": ["mcp-server-fetch"]
     }
   }
 }

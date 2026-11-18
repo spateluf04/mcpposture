@@ -1,0 +1,238 @@
+# MCPosture server capability rules.
+#
+# Each server an agent loads is classified into the capability flags of
+# Meta's "Agents Rule of Two" (ai.meta.com/blog/practical-ai-agent-security):
+#   A  processes untrustworthy input (web pages, email, issues, search results)
+#   B  accesses sensitive systems or private data (files, databases, secrets, cloud)
+#   C  changes state or communicates externally (writes, shell, outbound requests, messages)
+#
+# [[server]] entries match a known package, image, URL host, or command exactly
+# and take precedence. [[heuristic]] entries match by regular expression and are
+# only used when no [[server]] entry matches; their results are reported as
+# lower-confidence. A server matching neither is "unclassified", never "safe".
+#
+# See CONTRIBUTING.md for the field reference and review expectations.
+
+schema_version = 1
+rules_version = "2026.11.0"
+
+# --- Reference servers (github.com/modelcontextprotocol/servers) -------------
+
+[[server]]
+id = "mcp-filesystem"
+npm = ["@modelcontextprotocol/server-filesystem"]
+oci = ["mcp/filesystem"]
+capabilities = ["B", "C"]
+rationale = "Reads and writes files under the allowed directories."
+
+[[server]]
+id = "mcp-fetch"
+pypi = ["mcp-server-fetch"]
+npm = ["@modelcontextprotocol/server-fetch"]
+oci = ["mcp/fetch"]
+capabilities = ["A", "C"]
+rationale = "Returns arbitrary web content (A) and sends requests to arbitrary URLs, which can carry data out in the URL (C)."
+
+[[server]]
+id = "mcp-git"
+pypi = ["mcp-server-git"]
+oci = ["mcp/git"]
+capabilities = ["B", "C"]
+rationale = "Reads repository history and contents; creates commits and branches."
+
+[[server]]
+id = "mcp-memory"
+npm = ["@modelcontextprotocol/server-memory"]
+oci = ["mcp/memory"]
+capabilities = ["B"]
+rationale = "Stores and recalls user-supplied facts in a local knowledge graph file."
+
+[[server]]
+id = "mcp-time"
+pypi = ["mcp-server-time"]
+oci = ["mcp/time"]
+capabilities = []
+rationale = "Returns the current time and converts time zones; no data access or side effects."
+
+[[server]]
+id = "mcp-sequential-thinking"
+npm = ["@modelcontextprotocol/server-sequential-thinking"]
+oci = ["mcp/sequentialthinking"]
+capabilities = []
+rationale = "Structures the model's own reasoning; no external access."
+
+[[server]]
+id = "mcp-everything"
+npm = ["@modelcontextprotocol/server-everything"]
+capabilities = []
+rationale = "Protocol test server with synthetic tools."
+
+# --- Archived reference servers still common in configs ----------------------
+
+[[server]]
+id = "mcp-postgres"
+npm = ["@modelcontextprotocol/server-postgres"]
+oci = ["mcp/postgres"]
+capabilities = ["B"]
+rationale = "Read-only SQL access to a database."
+
+[[server]]
+id = "mcp-sqlite"
+pypi = ["mcp-server-sqlite"]
+oci = ["mcp/sqlite"]
+capabilities = ["B", "C"]
+rationale = "Reads and writes a local SQLite database."
+
+[[server]]
+id = "mcp-slack"
+npm = ["@modelcontextprotocol/server-slack"]
+oci = ["mcp/slack"]
+capabilities = ["A", "B", "C"]
+rationale = "Reads messages written by others (A) in private channels (B) and posts messages (C)."
+
+[[server]]
+id = "mcp-gdrive"
+npm = ["@modelcontextprotocol/server-gdrive"]
+capabilities = ["A", "B"]
+rationale = "Reads private documents, including ones other people shared into the drive."
+
+[[server]]
+id = "mcp-brave-search"
+npm = ["@modelcontextprotocol/server-brave-search"]
+oci = ["mcp/brave-search"]
+capabilities = ["A"]
+rationale = "Returns web search results, which Meta's post names as untrustworthy input."
+
+[[server]]
+id = "mcp-puppeteer"
+npm = ["@modelcontextprotocol/server-puppeteer"]
+oci = ["mcp/puppeteer"]
+capabilities = ["A", "C"]
+rationale = "Loads arbitrary web pages (A), navigates, clicks and submits forms (C)."
+
+[[server]]
+id = "mcp-redis"
+npm = ["@modelcontextprotocol/server-redis"]
+capabilities = ["B", "C"]
+rationale = "Reads and writes keys in a Redis instance."
+
+[[server]]
+id = "mcp-aws-kb-retrieval"
+npm = ["@modelcontextprotocol/server-aws-kb-retrieval"]
+capabilities = ["B"]
+rationale = "Queries a private AWS Bedrock knowledge base."
+
+# --- Vendor servers ----------------------------------------------------------
+
+[[server]]
+id = "github"
+npm = ["@modelcontextprotocol/server-github"]
+oci = ["ghcr.io/github/github-mcp-server", "mcp/github"]
+url_host = ["api.githubcopilot.com"]
+capabilities = ["A", "B", "C"]
+rationale = "Reads issues and pull requests anyone can write (A), private repositories (B), and creates issues, comments and commits (C). It meets all three on its own."
+
+[[server]]
+id = "gitlab"
+npm = ["@modelcontextprotocol/server-gitlab"]
+capabilities = ["A", "B", "C"]
+rationale = "Same shape as GitHub: untrusted issue text, private projects, and write access."
+
+[[server]]
+id = "playwright"
+npm = ["@playwright/mcp"]
+oci = ["mcr.microsoft.com/playwright/mcp", "mcp/playwright"]
+capabilities = ["A", "C"]
+rationale = "Drives a browser on arbitrary pages (A) and can navigate, type and submit (C)."
+
+[[server]]
+id = "context7"
+npm = ["@upstash/context7-mcp"]
+url_host = ["mcp.context7.com"]
+capabilities = ["A"]
+rationale = "Returns library documentation that third parties contribute."
+
+[[server]]
+id = "notion"
+npm = ["@notionhq/notion-mcp-server"]
+url_host = ["mcp.notion.com"]
+capabilities = ["A", "B", "C"]
+rationale = "Reads shared workspace pages (A, B) and creates or edits pages (C)."
+
+[[server]]
+id = "linear"
+url_host = ["mcp.linear.app"]
+capabilities = ["A", "B", "C"]
+rationale = "Reads issues others file (A) in a private workspace (B) and creates or updates issues (C)."
+
+[[server]]
+id = "atlassian"
+url_host = ["mcp.atlassian.com"]
+capabilities = ["A", "B", "C"]
+rationale = "Reads and writes Jira issues and Confluence pages written by others."
+
+[[server]]
+id = "stripe"
+npm = ["@stripe/mcp"]
+url_host = ["mcp.stripe.com"]
+capabilities = ["B", "C"]
+rationale = "Reads account and payment data and can create payment objects."
+
+[[server]]
+id = "desktop-commander"
+npm = ["@wonderwhy-er/desktop-commander"]
+capabilities = ["B", "C"]
+rationale = "Runs shell commands and edits files anywhere the user can."
+
+# --- Heuristics: used only when no [[server]] entry matches -----------------
+# Matched against the server name, command, arguments and URL joined by spaces.
+
+[[heuristic]]
+id = "web-fetch-or-browser"
+pattern = '(?i)\b(fetch|curl|wget|browser|puppeteer|playwright|selenium|scrap(e|er|ing)|crawl(er)?)\b'
+capabilities = ["A", "C"]
+
+[[heuristic]]
+id = "web-search"
+pattern = '(?i)\b(search|brave|tavily|exa|serp(api)?|perplexity|duckduckgo)\b'
+capabilities = ["A"]
+
+[[heuristic]]
+id = "email"
+pattern = '(?i)\b(gmail|e-?mail|imap|smtp|outlook|mailbox)\b'
+capabilities = ["A", "B", "C"]
+
+[[heuristic]]
+id = "chat-messaging"
+pattern = '(?i)\b(slack|discord|teams|telegram|whatsapp|mattermost)\b'
+capabilities = ["A", "B", "C"]
+
+[[heuristic]]
+id = "issue-tracker-or-forge"
+pattern = '(?i)\b(github|gitlab|bitbucket|jira|linear|asana|trello|clickup)\b'
+capabilities = ["A", "B", "C"]
+
+[[heuristic]]
+id = "database"
+pattern = '(?i)\b(postgres(ql)?|mysql|mariadb|sqlite|mongo(db)?|redis|supabase|snowflake|bigquery|dynamodb|database|sql)\b'
+capabilities = ["B", "C"]
+
+[[heuristic]]
+id = "cloud-or-infra"
+pattern = '(?i)\b(aws|gcp|gcloud|azure|kubernetes|k8s|kubectl|terraform|cloudflare|vercel)\b'
+capabilities = ["B", "C"]
+
+[[heuristic]]
+id = "shell"
+pattern = '(?i)\b(shell|terminal|bash|powershell|pwsh|ssh|exec|commander)\b'
+capabilities = ["B", "C"]
+
+[[heuristic]]
+id = "filesystem"
+pattern = '(?i)\b(filesystem|file-?system|files)\b'
+capabilities = ["B", "C"]
+
+[[heuristic]]
+id = "documents-and-calendar"
+pattern = '(?i)\b(calendar|gdrive|google-?drive|onedrive|dropbox|notion|confluence|sharepoint)\b'
+capabilities = ["A", "B"]

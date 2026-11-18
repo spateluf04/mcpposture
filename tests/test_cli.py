@@ -22,7 +22,7 @@ def test_json_scan_of_fixture_repo(capsys):
     code, out, _ = run(capsys, "scan", "--path", str(BASIC), "--format", "json")
     assert code == cli.EXIT_OK
     report = json.loads(out)
-    assert {s["name"] for s in report["servers"]} == {"github", "docs", "filesystem", "search"}
+    assert {s["name"] for s in report["servers"]} == {"context7", "docs", "filesystem", "search"}
     assert {c["client"] for c in report["contexts"]} == {"claude-code", "cursor", "vscode"}
     assert report["scan"]["mode"] == "path"
 
@@ -31,7 +31,7 @@ def test_vulnerable_fixture_trips_every_check(capsys):
     code, out, _ = run(capsys, "scan", "--path", str(VULNERABLE), "--format", "json")
     assert code == cli.EXIT_FINDINGS
     report = json.loads(out)
-    assert {f["check_id"] for f in report["findings"]} == {"MP002", "MP003", "MP004", "MP005", "MP006", "MP007"}
+    assert {f["check_id"] for f in report["findings"]} == {"MP001", "MP002", "MP003", "MP004", "MP005", "MP006", "MP007"}
     assert "AKIAIOSFODNN7EXAMPLE" not in out
     assert "fake-password-for-tests" not in out
 

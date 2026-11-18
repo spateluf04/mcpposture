@@ -20,6 +20,13 @@ def _wrap(text: str, indent: str) -> list[str]:
     return textwrap.wrap(clean(text), width=88, initial_indent=indent, subsequent_indent=indent) or [indent]
 
 
+def _flags(caps: dict[str, Any] | None) -> str:
+    if not caps or caps.get("source") == "unclassified":
+        return "???"
+    flags = "".join(f if f in caps.get("flags", []) else "-" for f in "ABC")
+    return flags.lower() if caps.get("source") == "heuristic" else flags
+
+
 def _where(loc: dict[str, Any]) -> str:
     line = f":{loc['line']}" if loc.get("line") else ""
     pointer = f"  {loc['pointer']}" if loc.get("pointer") else ""
@@ -61,13 +68,20 @@ def render(report: dict[str, Any]) -> str:
 
     if report["servers"]:
         out.append("")
-        out.append("Servers")
+        out.append("Servers  (Rule of Two: A untrusted input, B private data, C external actions; ? unclassified)")
         for srv in report["servers"]:
             target = srv["url"] or " ".join([srv["command"] or ""] + srv["args"])
             out.append(
-                f"  {clean(srv['client']):<16} {clean(srv['scope']):<8} {clean(srv['name']):<24} "
-                f"{clean(srv['transport']):<6} {clean(target)[:120]}"
+                f"  {_flags(srv.get('capabilities'))}  {clean(srv['client']):<16} {clean(srv['scope']):<8} "
+                f"{clean(srv['name']):<24} {clean(srv['transport']):<6} {clean(target)[:100]}"
             )
+
+    if report["contexts"]:
+        out.append("")
+        out.append("Agent contexts")
+        for c in report["contexts"]:
+            flags = "".join(f if f in c.get("capabilities", []) else "-" for f in "ABC")
+            out.append(f"  {flags}  {clean(c.get('rule_of_two', '')):<10} {clean(c['id'])}")
 
     if report["scan_issues"]:
         out.append("")

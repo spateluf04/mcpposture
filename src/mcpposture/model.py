@@ -116,6 +116,15 @@ class Finding:
     owasp_agentic: tuple[str, ...] = ()
 
 
+@dataclass(frozen=True)
+class Classification:
+    """Rule of Two capability flags for one server: A untrusted input, B sensitive data, C external effects."""
+
+    flags: frozenset[str]
+    source: Literal["rule", "heuristic", "unclassified"]
+    rule_ids: tuple[str, ...] = ()
+
+
 @dataclass
 class Inventory:
     files: list[FileRecord] = field(default_factory=list)
@@ -123,3 +132,6 @@ class Inventory:
     settings: list[SettingsDoc] = field(default_factory=list)
     contexts: list[AgentContext] = field(default_factory=list)
     issues: list[ScanIssue] = field(default_factory=list)
+    # Filled by classify.annotate(): server id -> capabilities.
+    capabilities: dict[str, Classification] = field(default_factory=dict)
+    rules_version: str | None = None
