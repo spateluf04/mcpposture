@@ -116,6 +116,12 @@ def test_managed_mcp_servers_only_from_managed_settings():
     assert parse("claude_settings", doc, client="claude-code", scope="user").servers == []
 
 
+def test_legacy_vscode_settings_mcp_key():
+    out = parse("vscode_settings", {"mcp": {"servers": {"old": {"command": "x"}}}, "editor.fontSize": 14}, client="vscode")
+    assert [(s.name, s.location.pointer) for s in out.servers] == [("old", "/mcp/servers/old")]
+    assert parse("claude_settings", {"mcp": {"servers": {"old": {"command": "x"}}}}, client="claude-code").servers == []
+
+
 def test_auto_format_sniffs_key():
     assert [s.name for s in parse("auto", {"servers": {"a": {"command": "x"}}}).servers] == ["a"]
     assert [s.name for s in parse("auto", {"mcpServers": {"b": {"command": "x"}}}).servers] == ["b"]

@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Sequence
 
-from mcpposture import __version__, checks, policy
+from mcpposture import __version__, checks, fleet, policy
 from mcpposture.discovery import Limits, ScanError, scan_local, scan_path
 from mcpposture.discovery.hostinfo import Host, detect
 from mcpposture.model import Finding, Inventory, Severity
@@ -77,6 +77,12 @@ def build_parser() -> argparse.ArgumentParser:
     pol_sub = pol.add_subparsers(dest="policy_command", required=True)
     validate = pol_sub.add_parser("validate", help="lint a policy file")
     validate.add_argument("policy_file", type=Path)
+
+    fleet = sub.add_parser("fleet", help="summarise JSON reports collected from many machines")
+    fleet.add_argument("reports", type=Path, nargs="+", help="report files, or directories of *.json reports")
+    fleet.add_argument("--format", choices=("text", "json"), default="text")
+    fleet.add_argument("-o", "--output", type=Path, help="write the summary to this file (mode 0600)")
+    fleet.add_argument("--top", type=_positive_int, default=10, help="rows per ranking (default: 10)")
     return parser
 
 
@@ -142,6 +148,17 @@ def _validate(args: argparse.Namespace) -> int:
     return EXIT_OK if parsed is not None else EXIT_FINDINGS
 
 
+def _fleet(args: argparse.Namespace) -> int:
+    for p in args.reports:
+        if not p.exists():
+            raise ScanError(f"{p}: no such file or directory")
+    loaded = fleet.load_reports(args.reports)
+    summary = fleet.summarise(loaded, top=args.top)
+    rendered = fleet.render_json(summary) if args.format == "json" else fleet.render_text(summary)
+    write_report(rendered, args.output)
+    return EXIT_OK
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     try:
@@ -155,6 +172,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _scan(args, enforcing=True)
         if args.command == "policy":
             return _validate(args)
+        if args.command == "fleet":
+            return _fleet(args)
     except policy.PolicyError as e:
         print(f"mcpposture: error: invalid policy: {text.clean(e)}", file=sys.stderr)
         print("run `mcpposture policy validate` for details", file=sys.stderr)

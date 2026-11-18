@@ -23,6 +23,7 @@ DOC_CURSOR = "https://cursor.com/docs/context/mcp"
 DOC_VSCODE_MCP = "https://code.visualstudio.com/docs/agents/reference/mcp-configuration"
 DOC_VSCODE_PROFILES = "https://code.visualstudio.com/docs/configure/profiles"
 DOC_VSCODE_APPROVALS = "https://code.visualstudio.com/docs/agents/run/approvals"
+DOC_VSCODE_REMOTE = "https://code.visualstudio.com/docs/agents/run/manage-mcp-servers"
 
 
 @dataclass(frozen=True)
@@ -85,6 +86,10 @@ LOCATIONS: tuple[ConfigLocation, ...] = (
     ConfigLocation("vscode-insiders", "user", "vscode_servers", "{app_support}/Code - Insiders/User/mcp.json", DOC_VSCODE_MCP),
     ConfigLocation("vscode-insiders", "profile", "vscode_servers", "{app_support}/Code - Insiders/User/profiles/*/mcp.json", DOC_VSCODE_PROFILES),
     ConfigLocation("vscode-insiders", "user", "vscode_settings", "{app_support}/Code - Insiders/User/settings.json", DOC_VSCODE_APPROVALS),
+    # VS Code Server on a remote host (WSL, SSH, dev container). Path from microsoft/vscode#324124; not yet in the docs.
+    ConfigLocation("vscode-remote", "user", "vscode_servers", "{home}/.vscode-server/data/User/mcp.json", DOC_VSCODE_REMOTE),
+    ConfigLocation("vscode-remote", "user", "vscode_settings", "{home}/.vscode-server/data/Machine/settings.json", DOC_VSCODE_REMOTE),
+    ConfigLocation("vscode-remote", "user", "vscode_servers", "{home}/.vscode-server-insiders/data/User/mcp.json", DOC_VSCODE_REMOTE),
 )
 # fmt: on
 

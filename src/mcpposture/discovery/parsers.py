@@ -207,6 +207,11 @@ def _settings(doc: Document, fc: FileContext) -> Parsed:
         # Claude Code honours managedMcpServers only from managed settings sources.
         if fc.client == "claude-code" and fc.scope == "managed":
             b.server_map(root.get("managedMcpServers"), "/managedMcpServers", "managed", None)
+        # Before 1.102 VS Code kept servers under "mcp" in settings.json; current
+        # versions migrate them to mcp.json, so anything left here is reported.
+        legacy = root.get("mcp")
+        if fc.client.startswith("vscode") and isinstance(legacy, dict):
+            b.server_map(legacy.get("servers"), "/mcp/servers", fc.scope, fc.project)
     return b.out
 
 

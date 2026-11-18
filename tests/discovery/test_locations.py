@@ -69,6 +69,8 @@ def test_glob_rows_expand_to_existing_profiles(tmp_path):
         ("x/Code/User/profiles/p1/mcp.json", [("vscode", "profile")]),
         ("x/ClaudeCode/managed-mcp.json", [("claude-code", "managed")]),
         ("x/managed-settings.d/10-base.json", [("claude-code", "managed")]),
+        ("home/.vscode-server/data/User/mcp.json", [("vscode-remote", "user")]),
+        ("home/.vscode-server/data/Machine/settings.json", [("vscode-remote", "user")]),
         ("repo/.vscode/settings.json", []),
         ("repo/settings.json", []),
         ("repo/mcp.json", []),

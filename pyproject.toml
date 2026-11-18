@@ -25,5 +25,5 @@ mcpposture = ["data/*.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["tests"]
+pythonpath = ["tests", "scripts"]
 addopts = "--import-mode=importlib"
