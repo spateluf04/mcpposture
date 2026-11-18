@@ -51,6 +51,12 @@ class ServerConfig:
     url: str | None = None
     headers: Mapping[str, str] = field(default_factory=dict)
     env_file: str | None = None
+    # Line of every JSON pointer in the source file, so findings on a single
+    # env var or arg can point at its exact line. Shared with the parsed doc.
+    lines: Mapping[str, int] = field(default_factory=dict, compare=False, repr=False)
+
+    def line_of(self, pointer: str) -> int | None:
+        return self.lines.get(pointer, self.location.line)
 
 
 @dataclass(frozen=True)

@@ -104,8 +104,12 @@ def find_secrets(text: str) -> list[SecretMatch]:
     return sorted(found, key=lambda f: f.start)
 
 
+_AUTH_SCHEME = re.compile(r"^(?:bearer|basic|token|apikey)\s+", re.IGNORECASE)
+
+
 def _benign_named_value(value: str) -> bool:
-    v = value.strip()
+    # "Bearer ${TOKEN}" is a reference once the auth scheme is removed.
+    v = _AUTH_SCHEME.sub("", value.strip())
     return (
         len(v) < 6
         or is_reference_only(v)

@@ -1,0 +1,7 @@
+{
+  "enableAllProjectMcpServers": true,
+  "permissions": {
+    "allow": ["Bash(*)", "Bash(python *)"],
+    "defaultMode": "bypassPermissions"
+  }
+}

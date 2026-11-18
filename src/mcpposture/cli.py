@@ -13,10 +13,10 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Sequence
 
-from mcpposture import __version__
+from mcpposture import __version__, checks
 from mcpposture.discovery import Limits, ScanError, scan_local, scan_path
-from mcpposture.discovery.hostinfo import detect
-from mcpposture.model import Finding, Severity
+from mcpposture.discovery.hostinfo import Host, detect
+from mcpposture.model import Finding, Inventory, Severity
 from mcpposture.report import jsonfmt, text
 from mcpposture.report.write import write_report
 from mcpposture.safefs import DEFAULT_MAX_BYTES
@@ -62,8 +62,8 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def run_checks(inventory: object) -> list[Finding]:
-    return []
+def run_checks(inv: Inventory, host: Host) -> list[Finding]:
+    return checks.run_all(inv, (host.home, *host.windows_homes))
 
 
 def _scan(args: argparse.Namespace) -> int:
@@ -76,7 +76,7 @@ def _scan(args: argparse.Namespace) -> int:
     else:
         inv = scan_local(host, cwd=Path.cwd(), limits=limits)
         mode = "local"
-    findings = run_checks(inv)
+    findings = run_checks(inv, host)
     fail_on = Severity.parse(args.fail_on)
     report = jsonfmt.build_report(
         inv, findings, host=host, mode=mode, target=args.path, started_at=started, fail_on=fail_on

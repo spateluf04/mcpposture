@@ -140,6 +140,7 @@ class _Builder:
                 url=url,
                 headers=self.str_map(entry.get("headers"), f"{pointer}/headers"),
                 env_file=self.opt_str(entry, "envFile", pointer),
+                lines=self.doc.lines,
             )
         )
 

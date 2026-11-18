@@ -1,0 +1,24 @@
+{
+  "mcpServers": {
+    "aws-docs": {
+      "command": "npx",
+      "args": ["-y", "@example/aws-mcp"],
+      "env": {
+        "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
+        "DB_PASSWORD": "fake-password-for-tests"
+      }
+    },
+    "intranet": {
+      "type": "http",
+      "url": "http://intranet.example.com/mcp",
+      "headers": { "Authorization": "Bearer ${INTRANET_TOKEN}" }
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem@2025.8.21", "/", "~/.ssh"]
+    },
+    "downloaded-tool": {
+      "command": "/tmp/mcp-server"
+    }
+  }
+}

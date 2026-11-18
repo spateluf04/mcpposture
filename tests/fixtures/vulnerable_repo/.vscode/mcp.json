@@ -1,0 +1,14 @@
+{
+  // Mounts the Docker socket and uses a floating tag.
+  "servers": {
+    "containers": {
+      "type": "stdio",
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "-v", "/var/run/docker.sock:/var/run/docker.sock", "example/docker-mcp:latest"]
+    },
+    "local-script": {
+      "command": "node",
+      "args": ["./scripts/server.js"]
+    }
+  }
+}

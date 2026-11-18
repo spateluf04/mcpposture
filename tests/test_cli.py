@@ -9,6 +9,7 @@ from mcpposture.model import Finding, Inventory, Location, Severity
 from conftest import FIXTURES
 
 BASIC = FIXTURES / "basic_repo"
+VULNERABLE = FIXTURES / "vulnerable_repo"
 
 
 def run(capsys, *argv):
@@ -24,6 +25,28 @@ def test_json_scan_of_fixture_repo(capsys):
     assert {s["name"] for s in report["servers"]} == {"github", "docs", "filesystem", "search"}
     assert {c["client"] for c in report["contexts"]} == {"claude-code", "cursor", "vscode"}
     assert report["scan"]["mode"] == "path"
+
+
+def test_vulnerable_fixture_trips_every_check(capsys):
+    code, out, _ = run(capsys, "scan", "--path", str(VULNERABLE), "--format", "json")
+    assert code == cli.EXIT_FINDINGS
+    report = json.loads(out)
+    assert {f["check_id"] for f in report["findings"]} == {"MP002", "MP003", "MP004", "MP005", "MP006", "MP007"}
+    assert "AKIAIOSFODNN7EXAMPLE" not in out
+    assert "fake-password-for-tests" not in out
+
+
+def test_vulnerable_fixture_text_report(capsys):
+    code, out, _ = run(capsys, "scan", "--path", str(VULNERABLE))
+    assert code == cli.EXIT_FINDINGS
+    assert out.index("CRITICAL (") < out.index("HIGH (") < out.index("MEDIUM (")
+    assert "AKIAIOSFODNN7EXAMPLE" not in out
+
+
+def test_fail_on_critical_ignores_lower_findings(capsys, tmp_path):
+    (tmp_path / ".mcp.json").write_text('{"mcpServers": {"s": {"command": "npx", "args": ["-y", "pkg"]}}}')
+    assert run(capsys, "scan", "--path", str(tmp_path), "--fail-on", "critical")[0] == cli.EXIT_OK
+    assert run(capsys, "scan", "--path", str(tmp_path), "--fail-on", "medium")[0] == cli.EXIT_FINDINGS
 
 
 def test_text_scan(capsys):
@@ -75,7 +98,7 @@ def _finding(sev):
     ],
 )
 def test_exit_code_threshold(monkeypatch, capsys, severity, fail_on, expected):
-    monkeypatch.setattr(cli, "run_checks", lambda inv: [_finding(severity)])
+    monkeypatch.setattr(cli, "run_checks", lambda inv, host: [_finding(severity)])
     assert run(capsys, "scan", "--path", str(BASIC), "--fail-on", fail_on)[0] == expected
 
 
