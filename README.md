@@ -1,5 +1,7 @@
 # MCPosture
 
+[![ci](https://github.com/spateluf04/mcpposture/actions/workflows/ci.yml/badge.svg)](https://github.com/spateluf04/mcpposture/actions/workflows/ci.yml)
+
 **Find risky AI agent and MCP server configurations on developer machines, before an attacker does.**
 
 AI coding agents (Claude Code, Cursor, VS Code, Claude Desktop) now load third-party "MCP servers" that can read files, browse the web, and run commands with the developer's own permissions, and the settings files that wire this up have become a new, mostly unaudited part of every endpoint. MCPosture reads those files, never runs anything in them, and tells engineers and non-specialists alike which configurations are dangerous, why, and how to fix them.
