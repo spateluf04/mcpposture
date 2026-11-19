@@ -13,6 +13,24 @@ $ mcpposture scan --path tests/fixtures/vulnerable_repo
 MCPosture 0.1.0  laptop [macos]
 Scanned 3 config files (0 unreadable), found 7 servers in 2 agent contexts.
 
+Summary
+  7 MCP servers: 7 need attention
+    CRITICAL aws-docs                 Claude Code (project)  Hardcoded aws credential (+2 more)
+    HIGH     intranet                 Claude Code (project)  Remote MCP server over cleartext transport
+    HIGH     filesystem               Claude Code (project)  Filesystem access to an entire drive (+1 more)
+    ...
+    MEDIUM   local-script             VS Code (project)      Server launched from a relative path
+
+  1 risky combination: one agent can read untrusted content, reach private data and act externally
+    HIGH     Claude Code in .../vulnerable_repo: aws-docs, filesystem, web
+
+  4 other settings need attention
+    HIGH     Every shell command is pre-approved
+             in vulnerable_repo/.claude/settings.json:4  /permissions/allow/0
+    ...
+
+  Details for each problem follow below.
+
 CRITICAL (1)
   MP002  Hardcoded aws credential  [aws-docs]
       at   vulnerable_repo/.mcp.json:7  /mcpServers/aws-docs/env/AWS_ACCESS_KEY_ID
@@ -46,7 +64,7 @@ Agent contexts
   ---  incomplete vscode:project:.../vulnerable_repo
 ```
 
-(Trimmed. Every finding prints its location, the redacted evidence, why it matters, the fix, and its CWE and OWASP references.)
+(Trimmed. The summary gives one line per server, risky combination and setting, worst first. Below it, every finding prints its location, the redacted evidence, why it matters, the fix, and its CWE and OWASP references.)
 
 ## Install and use
 

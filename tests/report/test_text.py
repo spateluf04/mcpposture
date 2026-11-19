@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from mcpposture.discovery.hostinfo import Host
-from mcpposture.model import Finding, Inventory, Location, ScanIssue, ServerConfig, Severity
+from mcpposture.model import AgentContext, Classification, Finding, Inventory, Location, ScanIssue, ServerConfig, Severity
 from mcpposture.report import text
 from mcpposture.report.jsonfmt import build_report
 
@@ -42,3 +42,40 @@ def test_findings_grouped_by_severity_highest_first():
 
 def test_no_findings_message():
     assert "Findings: none" in text.render(make_report(Inventory()))
+
+
+def summary_of(out):
+    return out[out.index("Summary"):out.index("Findings: none") if "Findings: none" in out else out.index("Details for each")]
+
+
+def test_summary_lists_each_server_with_its_worst_problem():
+    bad = ServerConfig("1", "bad", "vscode", "user", Location(Path("/f"), "/servers/bad"), None, "stdio", command="x")
+    good = ServerConfig("2", "good", "cursor", "user", Location(Path("/g"), "/mcpServers/good"), None, "stdio", command="y")
+    inv = Inventory(servers=[good, bad])
+    inv.capabilities["2"] = Classification(frozenset({"A"}), "rule")
+    on_bad = [
+        Finding("MP003", Severity.MEDIUM, "Unpinned server package", "w", "r", (), (), "vscode", Location(Path("/f"), "/servers/bad/args/0"), "", "a", server="bad"),
+        Finding("MP005", Severity.HIGH, "Too much disk", "w", "r", (), (), "vscode", Location(Path("/f"), "/servers/bad/args/1"), "", "b", server="bad"),
+    ]
+    summary = summary_of(text.render(make_report(inv, on_bad)))
+    assert "2 MCP servers: 1 needs attention" in summary
+    assert summary.index("HIGH     bad") < summary.index("ok       good")
+    assert "VS Code (user)" in summary and "Too much disk (+1 more)" in summary
+
+
+def test_summary_marks_unclassified_servers_unknown_not_ok():
+    srv = ServerConfig("1", "mystery", "cursor", "user", Location(Path("/f"), "/mcpServers/mystery"), None, "stdio", command="x")
+    summary = summary_of(text.render(make_report(Inventory(servers=[srv]))))
+    assert "unknown  mystery" in summary
+
+
+def test_summary_separates_settings_and_combinations():
+    a = ServerConfig("1", "reader", "claude-code", "user", Location(Path("/c"), "/mcpServers/reader"), None, "stdio", command="x")
+    inv = Inventory(servers=[a], contexts=[AgentContext("claude-code:user", "claude-code", None, ("1",))])
+    inv.capabilities["1"] = Classification(frozenset({"A", "B", "C"}), "rule")
+    combo = Finding("MP001", Severity.HIGH, "combo", "w", "r", (), (), "claude-code", Location(Path("/c"), "/mcpServers/reader"), "", "c", server="reader", context_id="claude-code:user")
+    setting = finding(Severity.MEDIUM, "Every shell command is pre-approved")
+    summary = summary_of(text.render(make_report(inv, [combo, setting])))
+    assert "1 risky combination" in summary and "HIGH     Claude Code: reader" in summary
+    assert "ok       reader" in summary
+    assert "1 other setting needs attention" in summary and "Every shell command is pre-approved" in summary

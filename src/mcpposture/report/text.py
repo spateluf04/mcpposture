@@ -33,6 +33,88 @@ def _where(loc: dict[str, Any]) -> str:
     return clean(f"{loc['path']}{line}{pointer}")
 
 
+_CLIENTS = {
+    "claude-desktop": "Claude Desktop",
+    "claude-code": "Claude Code",
+    "cursor": "Cursor",
+    "vscode": "VS Code",
+    "vscode-insiders": "VS Code Insiders",
+    "vscode-remote": "VS Code (remote)",
+}
+
+
+def _client(name: str) -> str:
+    return _CLIENTS.get(name, clean(name))
+
+
+def _owns(srv: dict[str, Any], f: dict[str, Any]) -> bool:
+    src, loc = srv["source"], f["location"]
+    pointer = loc.get("pointer") or ""
+    return src["path"] == loc["path"] and (pointer == src["pointer"] or pointer.startswith(src["pointer"] + "/"))
+
+
+def _problems(items: list[dict[str, Any]]) -> str:
+    more = f" (+{len(items) - 1} more)" if len(items) > 1 else ""
+    return clean(items[0]["title"]) + more
+
+
+def _summary(report: dict[str, Any]) -> list[str]:
+    """One line per server, risky combination and setting, for readers who will not read the details."""
+    findings = [f for f in report["findings"] if f["severity"] != "info"]
+    combos = [f for f in findings if f["check_id"] == "MP001"]
+    per_server = [f for f in findings if f["check_id"] != "MP001" and f.get("server")]
+    settings = [f for f in findings if f["check_id"] != "MP001" and not f.get("server")]
+    servers = report["servers"]
+    contexts = {c["id"]: c for c in report["contexts"]}
+    names = {s["id"]: s["name"] for s in servers}
+
+    out = ["Summary"]
+    if not servers:
+        out.append("  No MCP servers found.")
+    rows = []
+    for srv in servers:
+        mine = [f for f in per_server if _owns(srv, f)]
+        if mine:
+            status, note = mine[0]["severity"].upper(), _problems(mine)
+        elif srv["capabilities"]["source"] == "unclassified":
+            status, note = "unknown", "not in the rules list, so what it can do is unknown"
+        else:
+            status, note = "ok", ""
+        rows.append((status, srv, note))
+    rank = [s.upper() for s in _SEVERITY_ORDER] + ["unknown", "ok"]
+    rows.sort(key=lambda r: rank.index(r[0]))
+    if servers:
+        bad = sum(1 for status, _, _ in rows if status not in ("ok", "unknown"))
+        plural = "s" if len(servers) != 1 else ""
+        out.append(f"  {len(servers)} MCP server{plural}: {bad} need{'s' if bad == 1 else ''} attention")
+        for status, srv, note in rows:
+            where = f"{_client(srv['client'])} ({clean(srv['scope'])})"
+            out.append(f"    {status:<8} {clean(srv['name']):<24} {where:<22} {note}".rstrip())
+
+    if combos:
+        out.append("")
+        n = len(combos)
+        out.append(f"  {n} risky combination{'s' if n != 1 else ''}: one agent can read untrusted content, reach private data and act externally")
+        for f in combos:
+            ctx = contexts.get(f.get("context_id") or "", {})
+            members = [names.get(i, i) for i in ctx.get("server_ids", []) if i not in ctx.get("unclassified_server_ids", [])]
+            project = f" in {clean(ctx['project'])}" if ctx.get("project") else ""
+            out.append(f"    {f['severity'].upper():<8} {_client(f['client'])}{project}: {clean(', '.join(members) or f['server'])}")
+
+    if settings:
+        out.append("")
+        n = len(settings)
+        out.append(f"  {n} other setting{'s' if n != 1 else ''} need{'s' if n == 1 else ''} attention")
+        for f in settings:
+            out.append(f"    {f['severity'].upper():<8} {clean(f['title'])}")
+            out.append(f"             in {_where(f['location'])}")
+
+    if findings:
+        out.append("")
+        out.append("  Details for each problem follow below.")
+    return out
+
+
 def render(report: dict[str, Any]) -> str:
     out: list[str] = []
     s = report["summary"]
@@ -55,6 +137,9 @@ def render(report: dict[str, Any]) -> str:
             detail = ", ".join(f"{n} {r.replace('_', ' ')}" for r, n in sorted(reasons.items()))
             n = len(policy["violations"])
             out.append(f"Policy {clean(policy['path'])}: NOT COMPLIANT, {n} violation{'s' if n != 1 else ''} ({detail})")
+
+    out.append("")
+    out.extend(_summary(report))
 
     findings = report["findings"]
     out.append("")

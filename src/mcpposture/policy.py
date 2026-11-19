@@ -12,7 +12,7 @@ import os
 import re
 import tomllib
 from dataclasses import dataclass, field
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Iterable, Iterator, Sequence
 from urllib.parse import urlsplit
 
@@ -158,7 +158,10 @@ def _check_approved(e: Entry, problems: list[Problem]) -> None:
         problems.append(Problem("error", e.where, "digest must look like sha256:<64 lowercase hex>"))
     if e.sha256 and not _SHA256.match(e.sha256):
         problems.append(Problem("error", e.where, "sha256 must be 64 hex characters"))
-    if e.kind == "command" and not os.path.isabs(e.value):
+    # One policy file serves every OS in the fleet, so accept a rooted path in
+    # either style whatever OS validates it (os.path.isabs on Windows rejects
+    # /opt/... since Python 3.13).
+    if e.kind == "command" and not PureWindowsPath(e.value).root:
         problems.append(Problem("error", e.where, "command must be an absolute path"))
     if e.kind == "url":
         try:

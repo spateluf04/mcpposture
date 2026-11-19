@@ -73,6 +73,16 @@ def test_validation_warnings():
     assert "enforces nothing" in problems[0].message
 
 
+@pytest.mark.parametrize("path", ["/opt/company/bin/mcp", "C:\\\\Tools\\\\mcp.exe", "\\\\\\\\server\\\\share\\\\mcp.exe"])
+def test_command_path_from_any_os_is_valid_on_every_os(path):
+    ok(HEAD + f"[[approved]]\ncommand = '{path}'\nsha256 = '{D64}'".replace("'", '"'))
+
+
+@pytest.mark.parametrize("path", ["bin/server", "C:Tools\\\\mcp.exe"])
+def test_relative_command_path_is_rejected(path):
+    assert "command must be an absolute path" in errors_of(HEAD + f"[[approved]]\ncommand = \"{path}\"\nsha256 = '{D64}'")
+
+
 def test_loopback_http_url_may_be_approved():
     ok(HEAD + "[[approved]]\nurl = 'http://localhost:3000/mcp'")
 
