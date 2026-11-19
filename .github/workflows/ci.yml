@@ -27,6 +27,70 @@ jobs:
       - run: python -m pip install -e ".[dev]"
       - run: python -m pytest -q
 
+  macos-e2e:
+    name: scan real default locations on macOS
+    needs: test
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -e .
+
+      # Paths follow discovery/locations.py with the macOS bases from hostinfo.bases_for. The runner is a
+      # throwaway VM; the AWS key is Amazon's documented example value, as in tests/fixtures.
+      - name: Write fake configs to the default locations
+        shell: bash
+        run: |
+          unset CLAUDE_CONFIG_DIR COPILOT_HOME
+          support="$HOME/Library/Application Support"
+          mkdir -p "$support/Claude" "$support/Code/User" "$HOME/.cursor"
+          cat > "$support/Claude/claude_desktop_config.json" <<'EOF'
+          {"mcpServers": {"e2e-desktop": {"command": "/usr/bin/true", "env": {"AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE"}}}}
+          EOF
+          cat > "$HOME/.claude.json" <<'EOF'
+          {"mcpServers": {"e2e-claude-code": {"command": "/usr/bin/true"}}}
+          EOF
+          cat > "$HOME/.cursor/mcp.json" <<'EOF'
+          {"mcpServers": {"e2e-cursor": {"command": "/usr/bin/true"}}}
+          EOF
+          cat > "$support/Code/User/mcp.json" <<'EOF'
+          {"servers": {"e2e-vscode": {"type": "stdio", "command": "/usr/bin/true"}}}
+          EOF
+
+      - name: Scan and check the report
+        shell: bash
+        run: |
+          unset CLAUDE_CONFIG_DIR COPILOT_HOME
+          set +e
+          python -m mcpposture scan --format json -o mac-scan.json
+          code=$?
+          set -e
+          # The fake key is a High finding, so exit 1 is expected; 0 means it was missed, 2 is an error.
+          if [ "$code" -ne 1 ]; then echo "expected exit 1, got $code"; exit 1; fi
+          python - <<'EOF'
+          import json, os, stat
+          report = json.load(open("mac-scan.json", encoding="utf-8"))
+          found = {(s["client"], s["name"]) for s in report["servers"]}
+          expected = {("claude-desktop", "e2e-desktop"), ("claude-code", "e2e-claude-code"), ("cursor", "e2e-cursor"), ("vscode", "e2e-vscode")}
+          missing = expected - found
+          assert not missing, f"not discovered: {sorted(missing)}; found: {sorted(found)}"
+          assert any(f["check_id"] == "MP002" and f["server"] == "e2e-desktop" for f in report["findings"]), "MP002 not raised"
+          assert "AKIAIOSFODNN7EXAMPLE" not in open("mac-scan.json", encoding="utf-8").read(), "secret not redacted"
+          mode = stat.S_IMODE(os.stat("mac-scan.json").st_mode)
+          assert mode == 0o600, f"report mode is {mode:o}"
+          print("ok:", sorted(found & expected), "mode", oct(mode))
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mac-scan
+          path: mac-scan.json
+
   self-scan:
     name: scan fixtures and upload SARIF
     needs: test

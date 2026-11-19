@@ -20,7 +20,7 @@ INFO = CheckInfo(
     remediation="Install the server to a fixed location you control (a package manager prefix or a read-only directory) and reference it by absolute path.",
     cwe=("CWE-829",),
     owasp_llm=("LLM03:2025",),
-    owasp_agentic=("ASI05:2026",),
+    owasp_agentic=("ASI04:2026",),
 )
 
 _RELATIVE_WHY = (

@@ -20,7 +20,7 @@ INFO = CheckInfo(
     remediation="List only the project directories the agent needs. Never grant a drive root, your whole home directory, or folders such as .ssh, .aws, or a password store.",
     cwe=("CWE-250",),
     owasp_llm=("LLM06:2025",),
-    owasp_agentic=("ASI03:2026",),
+    owasp_agentic=("ASI02:2026", "ASI03:2026"),
 )
 
 # Servers whose positional arguments are the directories they expose.

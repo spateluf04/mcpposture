@@ -86,8 +86,13 @@ LOCATIONS: tuple[ConfigLocation, ...] = (
     ConfigLocation("vscode-insiders", "user", "vscode_servers", "{app_support}/Code - Insiders/User/mcp.json", DOC_VSCODE_MCP),
     ConfigLocation("vscode-insiders", "profile", "vscode_servers", "{app_support}/Code - Insiders/User/profiles/*/mcp.json", DOC_VSCODE_PROFILES),
     ConfigLocation("vscode-insiders", "user", "vscode_settings", "{app_support}/Code - Insiders/User/settings.json", DOC_VSCODE_APPROVALS),
-    # VS Code Server on a remote host (WSL, SSH, dev container). Path from microsoft/vscode#324124; not yet in the docs.
+    # VS Code Server on a remote host (WSL, SSH, dev container). The docs call this "the remote mcp.json" without a
+    # path; the path is from VS Code 1.147 source (commit 8a14f0cc): server.main.ts puts user data in
+    # ~/<serverDataFolderName>/data, and serverEnvironmentService.ts appends User/mcp.json and Machine/settings.json.
+    # Non-default local profiles map to remote profiles under data/User/profiles/<id> (remoteUserDataProfiles.ts).
+    # The Insiders folder name is not in public source.
     ConfigLocation("vscode-remote", "user", "vscode_servers", "{home}/.vscode-server/data/User/mcp.json", DOC_VSCODE_REMOTE),
+    ConfigLocation("vscode-remote", "profile", "vscode_servers", "{home}/.vscode-server/data/User/profiles/*/mcp.json", DOC_VSCODE_REMOTE),
     ConfigLocation("vscode-remote", "user", "vscode_settings", "{home}/.vscode-server/data/Machine/settings.json", DOC_VSCODE_REMOTE),
     ConfigLocation("vscode-remote", "user", "vscode_servers", "{home}/.vscode-server-insiders/data/User/mcp.json", DOC_VSCODE_REMOTE),
 )

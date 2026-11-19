@@ -19,7 +19,7 @@ INFO = CheckInfo(
     remediation="Remove the setting or narrow the rule to specific, read-only commands. Reserve bypass modes for disposable containers or VMs with no credentials.",
     cwe=("CWE-250",),
     owasp_llm=("LLM06:2025",),
-    owasp_agentic=("ASI02:2026",),
+    owasp_agentic=("ASI02:2026", "ASI05:2026"),
 )
 
 SKIP_PERMISSION_FLAGS = ("--dangerously-skip-permissions",)
