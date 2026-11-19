@@ -85,7 +85,7 @@ jobs:
           print("ok:", sorted(found & expected), "mode", oct(mode))
           EOF
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: mac-scan
@@ -141,7 +141,7 @@ jobs:
           python -m mcpposture fleet fleet-reports --format json -o fleet-summary.json
           python -m mcpposture fleet fleet-reports
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: reports
           path: |
